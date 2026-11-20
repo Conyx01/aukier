@@ -1,12 +1,10 @@
 import { ReviewsOverview } from "@/components/reviews-overview"
 import { ReviewsFilter } from "@/components/reviews-filter"
 import { ReviewsList } from "@/components/reviews-list"
-import { MobileNav } from "@/components/mobile-nav"
 
 export default function ReviewsPage() {
   return (
     <div className="min-h-screen bg-background">
-      <MobileNav />
       <main className="container mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Reviews & Ratings</h1>

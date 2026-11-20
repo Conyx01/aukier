@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  AUKIER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  phone         String?   @unique
+  email         String?   @unique
+  name          String?
+  role          UserRole  @default(CLIENT)
+  password      String?
+  verified      Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  aukierProfile AukierProfile?
+  jobs          Job[]
+  applications  JobApplication[]
+  reviewsGiven  Review[]         @relation("ReviewsGiven")
+  reviewsRecv   Review[]         @relation("ReviewsReceived")
+  sentMessages  Message[]        @relation("SentMessages")
+}
+
+model AukierProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String?
+  skills          String[]
+  hourlyRate      Float?
+  location        String?
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  trustScore      Int      @default(0)
+  portfolio       String[]
+  availability    String?  // Can be JSON or a separate model later
+  languages       String[]
+  
+  trustProfile    TrustProfile?
+  applications    JobApplication[]
+  reviews         Review[]
+}
+
+model TrustProfile {
+  id              String        @id @default(cuid())
+  aukierId        String        @unique
+  aukier          AukierProfile @relation(fields: [aukierId], references: [id], onDelete: Cascade)
+  phoneVerified   Boolean       @default(false)
+  idVerified      Boolean       @default(false)
+  communityScore  Int           @default(0)
+  reputationScore Int           @default(0)
+  overallScore    Int           @default(0)
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Job {
+  id            String           @id @default(cuid())
+  clientId      String
+  client        User             @relation(fields: [clientId], references: [id])
+  title         String
+  description   String
+  category      String?
+  location      String?
+  budgetMin     Float?
+  budgetMax     Float?
+  status        JobStatus        @default(OPEN)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  applications  JobApplication[]
+  payments      Payment[]
+  reviews       Review[]
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model JobApplication {
+  id            String            @id @default(cuid())
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  aukierId      String
+  aukier        AukierProfile     @relation(fields: [aukierId], references: [id], onDelete: Cascade)
+  applicantId   String            // The user ID of the applicant
+  applicant     User              @relation(fields: [applicantId], references: [id])
+  proposedPrice Float?
+  message       String?
+  status        ApplicationStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  HELD_IN_ESCROW
+  RELEASED
+  REFUNDED
+  FAILED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  jobId         String
+  job           Job           @relation(fields: [jobId], references: [id])
+  amount        Float
+  currency      String        @default("MWK")
+  status        PaymentStatus @default(PENDING)
+  provider      String?       // Mpamba, Airtel, TNM
+  transactionId String?       @unique
+  createdAt     DateTime      @default(now())
+}
+
+model Review {
+  id            String        @id @default(cuid())
+  jobId         String
+  job           Job           @relation(fields: [jobId], references: [id])
+  aukierId      String?
+  aukier        AukierProfile? @relation(fields: [aukierId], references: [id])
+  clientId      String
+  client        User          @relation("ReviewsGiven", fields: [clientId], references: [id])
+  targetUserId  String?       // Redundant if we have aukierId, but good for unified queries
+  targetUser    User?         @relation("ReviewsReceived", fields: [targetUserId], references: [id])
+  rating        Float
+  comment       String?
+  createdAt     DateTime      @default(now())
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  senderId        String
+  sender          User     @relation("SentMessages", fields: [senderId], references: [id])
+  content         String
+  createdAt       DateTime @default(now())
+}

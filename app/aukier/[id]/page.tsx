@@ -4,12 +4,10 @@ import { AukierServices } from "@/components/aukier-services"
 import { AukierPortfolio } from "@/components/aukier-portfolio"
 import { AukierReviews } from "@/components/aukier-reviews"
 import { AukierContactCard } from "@/components/aukier-contact-card"
-import { MobileNav } from "@/components/mobile-nav"
 
 export default function AukierProfilePage({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen bg-background">
-      <MobileNav />
       <main className="container mx-auto max-w-6xl px-4 py-6">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
